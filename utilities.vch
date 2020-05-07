@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------------------
+# Place mouse using rectangular grid
+# 
+# These functions place the mouse using a grid of 15 pixels per unit.
+# That gives 1 unit per line in my text editor (emacs), and means
+# coordinates are below 100 (for reliable recognition). See the grid by
+# taping paper rulers along screen edges. Inspired by Kim Patch.
+
+<number> := 1..99;
+ruler(pixel) := Eval(30*$pixel);
+moveTo(x,y) := SetMousePosition(0, ruler($x), ruler($y));
+Jump To <number> <number> = moveTo($1, $2);
+
+moveBy(x,y) := SetMousePosition(2, ruler($x), ruler($y));
+Jump By <number> <number> = moveBy($1, $2);
+
+
+
+# ---------------------------------------------------------------------------
+# Place the mouse near a window edge using compass points rather than
+# Dragon edge codes. Top is n (north), bottom right is se (southeast)
+# etc. This bit of Python does the conversion:
+
+getEdgeCode(edgeName) := 
+    Eval('{"north":1, "east":2, "south":3, "west":4, "north east":5, "south east":6, "south west":7, "north west":8}'
+         '[$edgeName]');
+
+<edges> := north|north east| north west| south| south east| south west| east| west;
+
+moveToEdge(edge) := SetMousePosition(4, getEdgeCode($edge));
+Jump to Edge <edges> = moveToEdge($1);
+
+dragNearScreenEdge(edge,x,y) :=
+    RememberPoint()
+    SetMousePosition(3, getEdgeCode($edge))
+    moveBy($x,$y)
+    DragToPoint()
+    ;
+
+Drag to <edges> = dragNearScreenEdge($1,0,0);
+
+# Make the current and previous applications tile the entire screen
+
+tileWindows(centerOffset) :=
+    moveToEdge(nw) dragNearScreenEdge(nw,-2,-2)
+    moveToEdge(se) dragNearScreenEdge(s, $centerOffset, 0)
+    SendSystemKeys({Alt+Tab})
+    moveToEdge(ne) dragNearScreenEdge(ne,2,-2)
+    moveToEdge(sw) dragNearScreenEdge(s, $centerOffset, 0)
+    ;
+
+#----------------------------------------------------------------
+# move and select
+
+#Move Text
+Delete That = {Backspace};
+Copy That ={Ctrl+c};
+Paste That = {Ctrl+v};
+Cut That = Wait(2){Ctrl+x};
+
+# move curser
+(Left | Right | Up | Down)  1..99= {$1_$2};
+
+# select
+Select that={Enter};
+Start Select = Keys.SendInput({LeftButton_hold});
+Stop Select = Keys.SendInput({LeftButton_release});
+Select Previous 1..99 = {Shift+Up_$1};
+Select Next 1..99 = {Shift+Down_$1};
+
